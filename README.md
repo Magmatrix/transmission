@@ -1,6 +1,8 @@
-= Class: transmission
+Class: transmission
+===================
 
-This class installs/configures/manages the transmission-daemon bittorrent client.
+This puppet class installs/configures/manages the transmission-daemon bittorrent client.
+
 
 == Parameters: 
 
