@@ -12,6 +12,10 @@
 # $web_password:: The password of the web client user (default: <none>)
 # $web_whitelist:: An array of IP addresses. This list define which machines are allowed to use the web interface. It is possible to use wildcards in the addresses. By default the list is empty.
 # $blocklist_url:: An url to a block list (default: <none>)
+# $package_name:: name of the package. Default to 'transmission-daemon'
+# $transmission_user:: default 'transmission'
+# $transmission_group:: default 'transmission'
+# $service_name:: default = $package_name
 #
 # == Requires: 
 # 
@@ -39,44 +43,53 @@ class transmission (
   $web_user = 'transmission',
   $web_password = undef,
   $web_whitelist = undef,
-) {
+  $package_name = 'transmission-daemon',
+  $transmission_user = 'transmission',
+  $transmission_group = 'transmission',
+  $service_name = undef,
+  ) {
+
+  if ($service_name == undef) {
+    $_service_name = $package_name
+  } else {
+    $_service_name = $service_name
+  }
 
   package { 'transmission-daemon':
+    name   => $package_name,
     ensure => installed,
   }
 
   # Find out the name of the transmission user/group
-  case $operatingsystem {
-    'Debian','Ubuntu': { $transmission_ug='debian-transmission' }
-    default: { $transmission_ug='transmission' }
-  }
+  # ## // Moved to calling class //
 
   # Helper. To circumvent transmission's bad habit of rewriting 'settings.json' every now and then.
   # Even tried to write protect settings.json, but no luck so far.
   exec { 'stop-daemon':
-    command => 'service transmission-daemon stop',
+    command => "service $package_name stop",
     path    => ['/sbin', '/usr/sbin'],
     require => Package['transmission-daemon'], # Needs to be installed before we can try to stop it
   }
 
   # Transmission should be able to read the config dir
-  file { "$config_path":
+  file { $config_path:
     ensure   => directory,
-    group    => $transmission_ug, # We only set the group (the dir could be owned by root or someone ele)
-    mode     => 'g+rx',           # Make sure transmission can access the config dir
-    require  => Package["transmission-daemon"], # Make sure that the package had the opportunity to create the directory first
+    group    => $transmission_group,            # We only set the group (the dir could be owned by root or someone ele)
+    mode     => 'g+rx',                         # Make sure transmission can access the config dir
+    require  => Package['transmission-daemon'], # Make sure that the package had the opportunity to create the directory first
   }
 
   # The settings file should follow our template
   file { 'settings.json':
     path    => "${config_path}/settings.json",
     ensure  => file,
-    require => [File["$config_path"],Exec['stop-daemon']],
+    require => [File[$config_path],Exec['stop-daemon']],
     content => template("${module_name}/settings.json.erb"),
     mode    => 'u+rw',          # Make sure transmisson can r/w settings
   }
 
   # Transmission should use the settings in ${config_path}/settings.json *only*
+  # This is ugly, but necessary
   file {['/etc/default/transmission','/etc/default/transmission-daemon','/etc/sysconfig/transmission','/etc/sysconfig/transmission-daemon']:
     ensure  => absent,                         # Kill the bastards
     require => Package['transmission-daemon'], # The package has to be installed first. Otherwise this would be sheer folly.
@@ -84,38 +97,35 @@ class transmission (
   }
     
   # Manage the download directory.  Creating parents will be taken care of "upstream" (in the calling class)
-  file { "${download_dir}":
+  file { $download_dir:
     ensure  => directory,
     recurse => true,
-    owner   => $transmission_ug,
-    group   => $transmission_ug,
-    mode    => "ug+rw,u+x",
+    owner   => $transmission_user,
+    group   => $transmission_group,
+    mode    => 'ug+rw,u+x',
     require => Package['transmission-daemon'], # Let's give the installer a chance to create the directory and user before we manage this dir
   }
 
   # directory for partial downloads
   if $incomplete_dir {
-    file { "${incomplete_dir}":
+    file { $incomplete_dir:
       ensure  => directory,
       recurse => true,
-      owner   => $transmission_ug,
-      group   => $transmission_ug,
-      mode    => "ug+rw,u+x",
+      owner   => $transmission_user,
+      group   => $transmission_group,
+      mode    => 'ug+rw,u+x',
       require => Package['transmission-daemon'],
     }
   }
 
-  
+  # Keep the service running
   service { 'transmission-daemon':
-    name => 'transmission-daemon',
+    name => $_service_name,
     ensure => running,
     enable => true,
     hasrestart => true,
     hasstatus => true,
-    ## subscribe => File['settings.json','/etc/default/transmission','/etc/default/transmission-daemon','/etc/sysconfig/transmission','/etc/sysconfig/transmission-daemon'], # In case some evil guy added defaults and restarted transmission without teling us.
-    ## This is done "up there" instead (because: less typing, just a short "before"-clause)
   }
-
 
   # Keep blocklist updated
   if $web_path and $blocklist_url {
@@ -135,4 +145,3 @@ class transmission (
     }
   }
 }
- 
