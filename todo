@@ -1,0 +1,16 @@
+* being able to choose the package name
+* being able to choose the user name
+* other picky stuff
+
+
+
+* def state of the server
+puppet resource ssh_authorized_key
+ftp server?
+
+bronze image:
+pxe -> os w/ puppet -> os
+
+node naming: pod+role+pool+...  // also by hw-name (mac-addr based)
+
+
