@@ -1,8 +1,8 @@
 {
-  "name": "magmatrixx-transmission",
+  "name": "Magmatrixx-transmission",
   "version": "0.1.0",
   "source": "UNKNOWN",
-  "author": "magmatrixx",
+  "author": "Magmatrixx",
   "license": "Apache License, Version 2.0",
   "summary": "transmission bittorrent client",
   "description": "manages the transmission bittorrent client, its web interface and optional block list",
@@ -14,7 +14,7 @@
 
   ],
   "checksums": {
-    "Modulefile": "12dc7862dec6b97d936f0b3c5b774c79",
+    "Modulefile": "ec53b2f17082b8b6f5657a3dbc9335e7",
     "README": "eb423f188453e7cdff62e9c92de7d979",
     "manifests/init.pp": "dfbb87834bdb533cb78296e6dd049481",
     "templates/settings.json.erb": "5fe3873414285c15c6f8019497416791",
