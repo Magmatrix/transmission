@@ -24,29 +24,29 @@
 # == Sample Usage:
 #
 #  class {'transmission':
-#    download_dir => "/downloads",
+#    download_dir   => "/downloads",
 #    incomplete_dir => "/tmp/downloads",
-#    web_path => "/bittorrent", ### Corrected
-#    web_port => 9091,
-#    web_whitelist => ['127.0.0.1'],
-#    blocklist_url => 'http://list.iblocklist.com/?list=bt_level1',
+#    web_path       => "/bittorrent", ### Corrected
+#    web_port       => 9091,
+#    web_whitelist  => ['127.0.0.1'],
+#    blocklist_url  => 'http://list.iblocklist.com/?list=bt_level1',
 #  }
 #
 
 class transmission (
-  $config_path = undef,
-  $download_dir = '/downloads',
-  $incomplete_dir = undef,
-  $blocklist_url = undef,
-  $web_path = undef,
-  $web_port = 9091,
-  $web_user = 'transmission',
-  $web_password = undef,
-  $web_whitelist = undef,
-  $package_name = 'transmission-daemon',
-  $transmission_user = 'transmission',
+  $config_path        = undef,
+  $download_dir       = '/downloads',
+  $incomplete_dir     = undef,
+  $blocklist_url      = undef,
+  $web_path           = undef,
+  $web_port           = 9091,
+  $web_user           = 'transmission',
+  $web_password       = undef,
+  $web_whitelist      = undef,
+  $package_name       = 'transmission-daemon',
+  $transmission_user  = 'transmission',
   $transmission_group = 'transmission',
-  $service_name = undef,
+  $service_name       = undef,
   ) {
 
   if ($service_name == undef) {
@@ -64,7 +64,7 @@ class transmission (
   # ## // Moved to calling class //
 
   # Helper. To circumvent transmission's bad habit of rewriting 'settings.json' every now and then.
-  # Even tried to write protect settings.json, but no luck so far.
+  # TODO: Eliminate this. // Even tried to write protect settings.json, but no luck so far.
   exec { 'stop-daemon':
     command => "service $package_name stop",
     path    => ['/sbin', '/usr/sbin'],
@@ -120,11 +120,11 @@ class transmission (
 
   # Keep the service running
   service { 'transmission-daemon':
-    name => $_service_name,
-    ensure => running,
-    enable => true,
+    name       => $_service_name,
+    ensure     => running,
+    enable     => true,
     hasrestart => true,
-    hasstatus => true,
+    hasstatus  => true,
   }
 
   # Keep blocklist updated
@@ -137,10 +137,10 @@ class transmission (
       $opt_auth = ""
     }
     cron { 'update-blocklist':
-      command => "/usr/bin/transmission-remote http://127.0.0.1:${web_port}${web_path}${opt_auth} --blocklist-update 2>&1 > /tmp/blocklist-update.log",
-      user => root,
-      hour => 2,
-      minute => 0,
+      command => "/usr/bin/transmission-remote http://127.0.0.1:${web_port}${web_path}${opt_auth} --blocklist-update 2>&1 > /tmp/blocklist.log",
+      user    => root,
+      hour    => 2,
+      minute  => 0,
       require => Package['transmission-daemon'],
     }
   }

@@ -1,18 +1,23 @@
-* being able to choose the package name
-* being able to choose the user name
-* other picky stuff
-* clean up
-* all settings should be done from the calling class
-* find a way to not restart transmission every time, circumvent transmission bugginess/design problems (we want the enterprise console to log "no change")
-
+TODO:
+=====
+* find a way to not have to restart transmission every time, circumvent transmission bugginess/design problems (we want the enterprise console to log "no change")
 
 * def state of the server
-manage the ssh keys // puppet resource ssh_authorized_key
-manage the ftp server?
+* manage the ssh keys // puppet resource ssh_authorized_key
+* manage the ftp server?
 
+
+FIXED:
+======
+* being able to choose the package name
+* being able to choose the user name
+* other picky stuff // align '=>'
+* clean up
+* all settings should be done from the calling class
+
+
+HOW TO INSTALL NEW NODES:
+=========================
 bronze image:
 pxe -> os w/ puppet -> os
-
 node naming: pod+role+pool+...  // also by hw-name (mac-addr based)
-
-
