@@ -55,6 +55,10 @@ class transmission (
     $_service_name = $service_name
   }
 
+  $_settings_json = "${config_path}/settings.json"
+  
+  $settings_tmp = '/tmp/transmission-settings.tmp'
+  
   package { 'transmission-daemon':
     name   => $package_name,
     ensure => installed,
@@ -63,30 +67,34 @@ class transmission (
   # Find out the name of the transmission user/group
   # ## // Moved to calling class //
 
-  # Helper. To circumvent transmission's bad habit of rewriting 'settings.json' every now and then.
-  # TODO: Eliminate this. // Even tried to write protect settings.json, but no luck so far.
-  exec { 'stop-daemon':
-    command => "service $package_name stop",
-    path    => ['/sbin', '/usr/sbin'],
-    require => Package['transmission-daemon'], # Needs to be installed before we can try to stop it
-  }
-
   # Transmission should be able to read the config dir
   file { $config_path:
     ensure   => directory,
     group    => $transmission_group,            # We only set the group (the dir could be owned by root or someone ele)
     mode     => 'g+rx',                         # Make sure transmission can access the config dir
-    require  => Package['transmission-daemon'], # Make sure that the package had the opportunity to create the directory first
+    require  => Package['transmission-daemon'], # Make sure that the package is installed and had the opportunity to create the directory first
   }
 
   # The settings file should follow our template
   file { 'settings.json':
-    path    => "${config_path}/settings.json",
+    path    => $_settings_json,
     ensure  => file,
-    require => [File[$config_path],Exec['stop-daemon']],
     content => template("${module_name}/settings.json.erb"),
     mode    => 'u+rw',          # Make sure transmisson can r/w settings
+    owner   => $transmission_user,
+    group   => $transmission_group,
+    require => [Package['transmission-daemon'],File[$config_path]],
+    before  => Exec['activate-new-settings'],
   }
+
+  # Helper. To circumvent transmission's bad habit of rewriting 'settings.json' every now and then.
+  exec { 'activate-new-settings':
+    refreshonly => true,        # Run only when another resource (File['settings.json']) tells us to do it
+    command     => "cp $_settings_json $settings_tmp; service $package_name stop; cat $settings_tmp > $_settings_json",
+    path        => ['/sbin', '/usr/sbin'],
+    notify      => Service['transmission-daemon'], # Now we can tell the service about the changes // Start service
+  }
+
 
   # Transmission should use the settings in ${config_path}/settings.json *only*
   # This is ugly, but necessary
@@ -125,6 +133,7 @@ class transmission (
     enable     => true,
     hasrestart => true,
     hasstatus  => true,
+    ## Is Package autorequired? If not - does it require 'transmission-daemon' or "$_service_name"??
   }
 
   # Keep blocklist updated
