@@ -1,12 +1,14 @@
 * being able to choose the package name
 * being able to choose the user name
 * other picky stuff
-
+* clean up
+* all settings should be done from the calling class
+* find a way to not restart transmission every time, circumvent transmission bugginess/design problems (we want the enterprise console to log "no change")
 
 
 * def state of the server
-puppet resource ssh_authorized_key
-ftp server?
+manage the ssh keys // puppet resource ssh_authorized_key
+manage the ftp server?
 
 bronze image:
 pxe -> os w/ puppet -> os
