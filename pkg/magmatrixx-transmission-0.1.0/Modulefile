@@ -1,6 +1,6 @@
-name    'magmatrix-transmission'
+name    'magmatrixx-transmission'
 version '0.1.0'
-author 'magmatrix'
+author 'magmatrixx'
 summary 'transmission bittorrent client'
 description 'manages the transmission bittorrent client, its web interface and optional block list'
 project_page 'https://github.com/Magmatrix/transmission'
