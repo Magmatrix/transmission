@@ -6,7 +6,6 @@
 #
 # $download_dir:: The directory where the files have to be downloaded. Defaults to +$config_path/downloads+.
 # $incomplete_dir:: The temporary directory used to store incomplete files. Disabled when the option is not set (this is the default).
-# $web_path:: URL path for the web client (without trailing /). Disabled when the option is not set (this is the default).
 # $web_port:: The port the web server is listening on. Defaults to +9091+.
 # $web_user:: The web client login name. Defaults to +transmission+.
 # $web_password:: The password of the web client user (default: <none>)
@@ -26,7 +25,6 @@
 #  class {'transmission':
 #    download_dir   => "/downloads",
 #    incomplete_dir => "/tmp/downloads",
-#    web_path       => "/bittorrent", ### Corrected
 #    web_port       => 9091,
 #    web_whitelist  => ['127.0.0.1'],
 #    blocklist_url  => 'http://list.iblocklist.com/?list=bt_level1',
@@ -38,16 +36,20 @@ class transmission (
   $download_dir       = '/downloads',
   $incomplete_dir     = undef,
   $blocklist_url      = undef,
-  $web_path           = undef,
   $web_port           = 9091,
   $web_user           = 'transmission',
   $web_password       = undef,
-  $web_whitelist      = undef,
+  $web_whitelist      = [],
   $package_name       = 'transmission-daemon',
   $transmission_user  = 'transmission',
   $transmission_group = 'transmission',
   $service_name       = undef,
-  ) {
+  $umask              = 18, # Umask for downloaded files (in decimal)
+  $ratio_limit        = undef, # No ratio limit
+  $peer_port          = 61500, #
+  $speed_down         = undef, # undef=Unlimited
+  $speed_up           = undef, # undef=Unlimited
+) {
 
   if ($service_name == undef) {
     $_service_name = $package_name
@@ -84,21 +86,21 @@ class transmission (
     owner   => $transmission_user,
     group   => $transmission_group,
     require => [Package['transmission-daemon'],File[$config_path]],
-    before  => Exec['activate-new-settings'],
+    notify  => Exec['activate-new-settings'],
   }
 
   # Helper. To circumvent transmission's bad habit of rewriting 'settings.json' every now and then.
   exec { 'activate-new-settings':
     refreshonly => true,        # Run only when another resource (File['settings.json']) tells us to do it
-    command     => "cp $_settings_json $settings_tmp; service $package_name stop; cat $settings_tmp > $_settings_json",
-    path        => ['/sbin', '/usr/sbin'],
+    command     => "cp $_settings_json $settings_tmp; service $service_name stop; sleep 5; cat $settings_tmp > $_settings_json; chmod u+r $_settings_json",
+    path        => ['/bin','/sbin', '/usr/sbin'],
     notify      => Service['transmission-daemon'], # Now we can tell the service about the changes // Start service
   }
 
 
   # Transmission should use the settings in ${config_path}/settings.json *only*
   # This is ugly, but necessary
-  file {['/etc/default/transmission','/etc/default/transmission-daemon','/etc/sysconfig/transmission','/etc/sysconfig/transmission-daemon']:
+  file {['/etc/default/transmission','/etc/sysconfig/transmission']:
     ensure  => absent,                         # Kill the bastards
     require => Package['transmission-daemon'], # The package has to be installed first. Otherwise this would be sheer folly.
     before  => Service['transmission-daemon'], # After this is fixed, we can handle the service
@@ -107,7 +109,7 @@ class transmission (
   # Manage the download directory.  Creating parents will be taken care of "upstream" (in the calling class)
   file { $download_dir:
     ensure  => directory,
-    recurse => true,
+    #recurse => true,  # Broken. Creates invalid resurce tags for some downloaded files with funny characters.
     owner   => $transmission_user,
     group   => $transmission_group,
     mode    => 'ug+rw,u+x',
@@ -133,11 +135,11 @@ class transmission (
     enable     => true,
     hasrestart => true,
     hasstatus  => true,
-    ## Is Package autorequired? If not - does it require 'transmission-daemon' or "$_service_name"??
+    require    => Package['transmission-daemon'],
   }
 
   # Keep blocklist updated
-  if $web_path and $blocklist_url {
+  if $blocklist_url {
     if $web_password {
       $opt_auth = " --auth ${web_user}:${web_password}"
     }
@@ -146,7 +148,7 @@ class transmission (
       $opt_auth = ""
     }
     cron { 'update-blocklist':
-      command => "/usr/bin/transmission-remote http://127.0.0.1:${web_port}${web_path}${opt_auth} --blocklist-update 2>&1 > /tmp/blocklist.log",
+      command => "/usr/bin/transmission-remote http://127.0.0.1:${web_port}/transmission/${opt_auth} --blocklist-update 2>&1 > /tmp/blocklist.log",
       user    => root,
       hour    => 2,
       minute  => 0,
