@@ -49,6 +49,8 @@ class transmission (
   $peer_port          = 61500, #
   $speed_down         = undef, # undef=Unlimited
   $speed_up           = undef, # undef=Unlimited
+  $seed_queue_enabled = true,
+  $seed_queue_size    = 10,
 ) {
 
   if ($service_name == undef) {
