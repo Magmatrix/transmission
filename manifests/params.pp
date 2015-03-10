@@ -14,7 +14,7 @@ class transmission::params {
   $package_name       = 'transmission-daemon'
   $transmission_user  = 'transmission'
   $transmission_group = 'transmission'
-  $service_name       = undef
+  $service_name       = $package_name
   $umask              = 18 # Umask for downloaded files (in decimal)
   $ratio_limit        = undef # No ratio limit
   $peer_port          = 61500 #

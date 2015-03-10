@@ -53,12 +53,6 @@ class transmission (
   $seed_queue_size    = $transmission::params::seed_queue_size,
 ) inherits transmission::params {
 
-  if ($service_name == undef) {
-    $_service_name = $package_name
-  } else {
-    $_service_name = $service_name
-  }
-
   $_settings_json = "${config_path}/settings.json"
   
   $settings_tmp = '/tmp/transmission-settings.tmp'
@@ -132,7 +126,7 @@ class transmission (
 
   # Keep the service running
   service { 'transmission-daemon':
-    name       => $_service_name,
+    name       => $service_name,
     ensure     => running,
     enable     => true,
     hasrestart => true,
