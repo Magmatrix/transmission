@@ -32,32 +32,26 @@
 #
 
 class transmission (
-  $config_path        = undef,
-  $download_dir       = '/downloads',
-  $incomplete_dir     = undef,
-  $blocklist_url      = undef,
-  $web_port           = 9091,
-  $web_user           = 'transmission',
-  $web_password       = undef,
-  $web_whitelist      = [],
-  $package_name       = 'transmission-daemon',
-  $transmission_user  = 'transmission',
-  $transmission_group = 'transmission',
-  $service_name       = undef,
-  $umask              = 18, # Umask for downloaded files (in decimal)
-  $ratio_limit        = undef, # No ratio limit
-  $peer_port          = 61500, #
-  $speed_down         = undef, # undef=Unlimited
-  $speed_up           = undef, # undef=Unlimited
-  $seed_queue_enabled = true,
-  $seed_queue_size    = 10,
-) {
-
-  if ($service_name == undef) {
-    $_service_name = $package_name
-  } else {
-    $_service_name = $service_name
-  }
+  $config_path        = $transmission::params::config_path,
+  $download_dir       = $transmission::params::download_dir,
+  $incomplete_dir     = $transmission::params::incomplete_dir,
+  $blocklist_url      = $transmission::params::blocklist_url,
+  $web_port           = $transmission::params::web_port,
+  $web_user           = $transmission::params::web_user,
+  $web_password       = $transmission::params::web_password,
+  $web_whitelist      = $transmission::params::web_whitelist,
+  $package_name       = $transmission::params::package_name,
+  $transmission_user  = $transmission::params::transmission_user,
+  $transmission_group = $transmission::params::transmission_group,
+  $service_name       = $transmission::params::service_name,
+  $umask              = $transmission::params::umask,
+  $ratio_limit        = $transmission::params::ratio_limit,
+  $peer_port          = $transmission::params::peer_port,
+  $speed_down         = $transmission::params::speed_down,
+  $speed_up           = $transmission::params::speed_up,
+  $seed_queue_enabled = $transmission::params::seed_queue_enabled,
+  $seed_queue_size    = $transmission::params::seed_queue_size,
+) inherits transmission::params {
 
   $_settings_json = "${config_path}/settings.json"
   
@@ -132,7 +126,7 @@ class transmission (
 
   # Keep the service running
   service { 'transmission-daemon':
-    name       => $_service_name,
+    name       => $service_name,
     ensure     => running,
     enable     => true,
     hasrestart => true,
