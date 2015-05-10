@@ -22,4 +22,5 @@ class transmission::params {
   $speed_up           = undef # undef=Unlimited
   $seed_queue_enabled = true
   $seed_queue_size    = 10
+  $upnp               = false
 }

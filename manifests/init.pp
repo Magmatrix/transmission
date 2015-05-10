@@ -51,6 +51,7 @@ class transmission (
   $speed_up           = $transmission::params::speed_up,
   $seed_queue_enabled = $transmission::params::seed_queue_enabled,
   $seed_queue_size    = $transmission::params::seed_queue_size,
+  $upnp               = $transmission::params::upnp,
 ) inherits transmission::params {
 
   $_settings_json = "${config_path}/settings.json"
