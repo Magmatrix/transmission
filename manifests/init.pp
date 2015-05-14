@@ -166,7 +166,7 @@ class transmission (
       $opt_auth = ''
     }
     cron { 'update-blocklist':
-      command => "/usr/bin/transmission-remote http://127.0.0.1:${web_port}/transmission/${opt_auth} --blocklist-update 2>&1 > /tmp/blocklist.log",
+      command => "/usr/bin/transmission-remote ${web_port} ${opt_auth} --blocklist-update 2>&1 > /tmp/blocklist.log",
       user    => root,
       hour    => 2,
       minute  => 0,
