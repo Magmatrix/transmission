@@ -1,17 +1,12 @@
-transmission
+# transmission
 
 This module manages the transmission bittorrent daemon.
 
-
-License
--------
+# License
 
 
-Contact
--------
+# Contact
 
 https://github.com/Magmatrix/transmission
 
-Support
--------
-
+# Support
