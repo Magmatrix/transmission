@@ -73,14 +73,21 @@ class transmission (
 
   # Transmission should be able to read the config dir
   file { $config_path:
-    ensure   => directory,
+    ensure  => directory,
     # We only set the group (the dir could be owned by root or someone else)
-    group    => $transmission_group,
+    group   => $transmission_group,
     # Make sure transmission can access the config dir
-    mode     => 'g+rx',
+    mode    => 'g+rx',
     # Make sure that the package is installed and had the opportunity to create
     # the directory first
-    require  => Package['transmission-daemon'],
+    require => Package['transmission-daemon'],
+  }
+
+  # OS specific configuration for init script
+  case $::operatingsystem {
+    'RedHat', 'CentOS': { include ::transmission::redhat }
+    /^(Debian|Ubuntu)$/:{ include ::transmission::debian }
+    default:            { }
   }
 
   # The settings file should follow our template
@@ -104,19 +111,6 @@ class transmission (
     path        => ['/bin','/sbin', '/usr/sbin'],
     # Now we can tell the service about the changes // Start service
     notify      => Service['transmission-daemon'],
-  }
-
-
-  # Transmission should use the settings in ${config_path}/settings.json *only*
-  # This is ugly, but necessary
-  file {['/etc/default/transmission','/etc/sysconfig/transmission']:
-    # Kill the bastards
-    ensure  => absent,
-    # The package has to be installed first. Otherwise this would be sheer
-    # folly.
-    require => Package['transmission-daemon'],
-    # After this is fixed, we can handle the service
-    before  => Service['transmission-daemon'],
   }
 
   # Manage the download directory.  Creating parents will be taken care of
@@ -145,6 +139,7 @@ class transmission (
       require => Package['transmission-daemon'],
     }
   }
+
 
   # Keep the service running
   service { 'transmission-daemon':
