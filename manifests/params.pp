@@ -3,7 +3,7 @@
 # Default Parameter values
 
 class transmission::params {
-  $config_path        = undef
+  $config_path        = '/opt/transmission'
   $download_dir       = '/downloads'
   $incomplete_dir     = undef
   $blocklist_url      = undef
